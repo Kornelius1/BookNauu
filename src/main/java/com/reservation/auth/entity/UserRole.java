@@ -1,7 +1,11 @@
 package com.reservation.auth.entity;
 
-public enum Role {
+public enum UserRole {
+
     ADMIN,
+
     STAFF,
+
     CUSTOMER
+
 }
