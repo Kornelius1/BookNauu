@@ -1,27 +1,5 @@
 ---
 
-# 📸 System Preview
-
-> UI akan dikembangkan pada tahap berikutnya. Berikut adalah gambaran alur sistem.
-
-```mermaid
-flowchart LR
-
-Customer --> Website
-
-Website --> SpringBoot
-
-SpringBoot --> PostgreSQL
-
-SpringBoot --> GoogleCalendar
-
-SpringBoot --> GoogleSheets
-
-SpringBoot --> PaymentGateway
-```
-
----
-
 # 🏛 System Architecture
 
 ```mermaid
