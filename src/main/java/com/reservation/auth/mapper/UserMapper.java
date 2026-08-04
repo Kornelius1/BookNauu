@@ -1,4 +1,4 @@
-package com.reservation.auth.Mapper;
+package com.reservation.auth.mapper;
 
 import com.reservation.auth.dto.request.RegisterRequest;
 import com.reservation.auth.dto.response.UserResponse;

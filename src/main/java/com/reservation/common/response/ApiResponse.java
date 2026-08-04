@@ -34,6 +34,7 @@ public class ApiResponse<T> {
         return ApiResponse.<Void>builder()
                 .success(true)
                 .message(message)
+                .timestamp(LocalDateTime.now())
                 .build();
     }
 
