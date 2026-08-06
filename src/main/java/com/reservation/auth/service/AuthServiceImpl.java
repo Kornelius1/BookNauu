@@ -84,6 +84,17 @@ public class AuthServiceImpl implements AuthService {
         return userMapper.toResponse(user);
     }
 
+    @Override
+    public User getCurrentUserEntity() {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        return (User) authentication.getPrincipal();
+    }
+
     private void validateEmail(String email) {
 
         if (userRepository.existsByEmail(email)) {
