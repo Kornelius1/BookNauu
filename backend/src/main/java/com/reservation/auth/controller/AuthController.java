@@ -23,6 +23,8 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request
     ) {
 
+        System.out.println("========== LOGIN CONTROLLER ==========");
+
         LoginResponse response = authService.login(request);
 
         return ResponseEntity.ok(

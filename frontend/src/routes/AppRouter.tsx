@@ -8,32 +8,47 @@ import Rooms from "@/pages/Rooms";
 import Reservation from "@/pages/Reservation";
 import NotFound from "@/pages/NotFound";
 import Users from "@/pages/Users";
+import Login from "@/pages/Login";
+import Unauthorized from "@/pages/Unauthorized.tsx";
+import ProtectedRoute from "@/routes/ProtectedRoute.tsx";
 
 
 export const router = createBrowserRouter([
     {
-        path: "/",
-        element: <AppLayout />,
+        path: "/login",
+        element: <Login />,
+    },
+    {
+        path: "/unauthorized",
+        element: <Unauthorized />,
+    },
+    {
+        element: <ProtectedRoute />,
         children: [
             {
-                index: true,
-                element: <Dashboard />,
-            },
-            {
-                path: "dashboard",
-                element: <Dashboard />,
-            },
-            {
-                path: "rooms",
-                element: <Rooms />,
-            },
-            {
-                path: "reservations",
-                element: <Reservation />,
-            },
-            {
-                path: "users",
-                element: <Users />,
+                element: <AppLayout />,
+                children: [
+                    {
+                        index: true,
+                        element: <Dashboard />,
+                    },
+                    {
+                        path: "dashboard",
+                        element: <Dashboard />,
+                    },
+                    {
+                        path: "rooms",
+                        element: <Rooms />,
+                    },
+                    {
+                        path: "reservations",
+                        element: <Reservation />,
+                    },
+                    {
+                        path: "users",
+                        element: <Users />,
+                    },
+                ],
             },
         ],
     },
