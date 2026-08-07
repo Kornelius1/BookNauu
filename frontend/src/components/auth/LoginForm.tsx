@@ -31,9 +31,14 @@ export default function LoginForm() {
     async function onSubmit(data: LoginFormData) {
         try {
             const response = await loginService(data);
+
+            // console.log("FULL RESPONSE:", response);
+            // console.log("USER:", response.user);
+            // console.log("ROLE:", response.user.role);
+
             login(response);
 
-            if (response.user.role === "ROLE_ADMIN") {
+            if (response.user.role === "ADMIN") {
                 navigate("/dashboard", { replace: true });
             } else {
                 navigate("/reservations", { replace: true });
@@ -119,6 +124,7 @@ export default function LoginForm() {
                 </div>
 
                 <Button
+                    type="submit"
                     disabled={isSubmitting}
                     className="h-11 w-full bg-white text-black transition-all hover:bg-zinc-200 hover:shadow-lg"
                 >

@@ -1,33 +1,16 @@
-import { useEffect, useState } from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
-export default function useAuth() {
-    const [loading, setLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+export default function ProtectedRoute() {
+    const { loading, isAuthenticated } = useAuth();
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                const user = localStorage.getItem("user");
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
-                if (token && user) {
-                    setIsAuthenticated(true);
-                } else {
-                    setIsAuthenticated(false);
-                }
-            } catch (error) {
-                console.error(error);
-                setIsAuthenticated(false);
-            } finally {
-                setLoading(false);
-            }
-        };
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
 
-        checkAuth();
-    }, []);
-
-    return {
-        loading,
-        isAuthenticated,
-    };
+    return <Outlet />;
 }

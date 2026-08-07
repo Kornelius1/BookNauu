@@ -2,7 +2,8 @@ export interface User {
     id:number;
     fullName:string;
     email:string;
-    role: "ROLE_ADMIN" | "ROLE_CUSTOMER";
+    avatar?: string;
+    role: "ADMIN" | "CUSTOMER";
 }
 
 export interface LoginResponse {
