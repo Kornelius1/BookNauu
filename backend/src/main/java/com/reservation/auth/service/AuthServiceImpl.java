@@ -79,7 +79,16 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        User user = (User) authentication.getPrincipal();
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User",
+                                "email",
+                                email
+                        )
+                );
 
         return userMapper.toResponse(user);
     }

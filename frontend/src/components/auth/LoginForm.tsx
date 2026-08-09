@@ -1,0 +1,195 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
+import { CalendarDays } from "lucide-react";
+import { FaGithub, FaGoogle } from "react-icons/fa6";
+import { KineticText } from "@/components/ui/kinetic-text";
+
+
+import { loginSchema, type LoginFormData } from "@/schemas/auth.schema";
+import { login as loginService } from "@/services/auth.service";
+import axios from "axios";
+import {useState, useEffect} from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+export default function LoginForm() {
+    const navigate = useNavigate();
+    const { login } = useAuth();
+    const [loginError, setLoginError] = useState("");
+
+
+    const {
+        control,
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+    } = useForm<LoginFormData>({
+        resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: "",
+            password: "",
+        },
+    });
+
+    const email= useWatch({control, name: "email", });
+    const password = useWatch({control, name:"password"});
+
+
+    useEffect(() => {
+        if (loginError) {
+            setLoginError("");
+        }
+    }, [email, password]);
+
+    async function onSubmit(data: LoginFormData) {
+        try {
+            const response = await loginService(data);
+            setLoginError("");
+
+            // console.log("FULL RESPONSE:", response);
+            // console.log("USER:", response.user);
+            // console.log("ROLE:", response.user.role);
+
+            login(response);
+
+            if (response.user.role === "ADMIN") {
+                navigate("/dashboard", { replace: true });
+            } else {
+                navigate("/reservations", { replace: true });
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error)){
+                if (error.response?.status === 403){
+                    setLoginError(
+                        "You don't have permission to access this application."
+                    );
+                    return;
+                }
+
+                if (error.response?.status === 500){
+                    setLoginError(
+                        "server error. Please try again later."
+                    );
+                    return;
+                }
+
+                setLoginError(
+                    error.response?.data?.message ??
+                    "Invalid email or password."
+                );
+                return;
+            }
+            setLoginError(
+                "Unexpected error occured."
+            );
+        }
+    }
+
+    return (
+        <div className="space-y-8">
+            {/* Logo + Title */}
+            <div className="text-center">
+                <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-black shadow-lg">
+                    <CalendarDays size={26} />
+                </div>
+                <div className="flex justify-center">
+                    <KineticText
+                        text="BookNauu"
+                        className="text-4xl font-semibold tracking-tight text-white"
+                    />
+                </div>
+                <p className="mt-2 text-sm text-zinc-400">
+                    Sign in to your account
+                </p>
+            </div>
+
+            {/* Social Login */}
+            <div className="grid grid-cols-2 gap-3">
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 border-zinc-800 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
+                >
+                    <FaGithub size={16} className="mr-2" />
+                    GitHub
+                </Button>
+
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 border-zinc-800 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
+                >
+                    <FaGoogle size={16} className="mr-2" />
+                    Google
+                </Button>
+            </div>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-zinc-800" />
+                <span className="text-xs text-zinc-500">OR</span>
+                <div className="h-px flex-1 bg-zinc-800" />
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div>
+                    <Input
+                        className="h-11 border-zinc-800 bg-zinc-900 text-white placeholder:text-zinc-500 focus-visible:ring-blue-500"
+                        placeholder="email@example.com"
+                        {...register("email")}
+                    />
+                    {errors.email && (
+                        <p className="mt-1 text-xs text-red-400">
+                            {errors.email.message}
+                        </p>
+                    )}
+                </div>
+
+                <div>
+                    <Input
+                        className="h-11 border-zinc-800 bg-zinc-900 text-white placeholder:text-zinc-500 focus-visible:ring-blue-500"
+                        type="password"
+                        placeholder="Password"
+                        {...register("password")}
+                    />
+                    {errors.password && (
+                        <p className="mt-1 text-xs text-red-400">
+                            {errors.password.message}
+                        </p>
+                    )}
+                </div>
+
+                {loginError && (
+                    <div
+                        className="
+                            rounded-lg
+                            border
+                            border-red-500/20
+                            bg-red-500/10
+                            px-4
+                            py-3
+                            text-sm
+                            text-red-400
+                        ">
+                        {loginError}
+                    </div>
+                )}
+
+                <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="h-11 w-full bg-white text-black transition-all hover:bg-zinc-200 hover:shadow-lg"
+                >
+                    {isSubmitting ? "Signing in..." : "Log in with email"}
+                </Button>
+            </form>
+
+            <p className="text-center text-xs text-zinc-500">
+                By continuing, you agree to our Terms and Privacy Policy.
+            </p>
+        </div>
+    );
+}
