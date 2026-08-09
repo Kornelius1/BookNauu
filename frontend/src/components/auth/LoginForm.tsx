@@ -1,4 +1,3 @@
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays } from "lucide-react";
@@ -8,6 +7,9 @@ import { KineticText } from "@/components/ui/kinetic-text";
 
 import { loginSchema, type LoginFormData } from "@/schemas/auth.schema";
 import { login as loginService } from "@/services/auth.service";
+import axios from "axios";
+import {useState, useEffect} from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +17,11 @@ import { Input } from "@/components/ui/input";
 export default function LoginForm() {
     const navigate = useNavigate();
     const { login } = useAuth();
+    const [loginError, setLoginError] = useState("");
+
 
     const {
+        control,
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
@@ -28,9 +33,20 @@ export default function LoginForm() {
         },
     });
 
+    const email= useWatch({control, name: "email", });
+    const password = useWatch({control, name:"password"});
+
+
+    useEffect(() => {
+        if (loginError) {
+            setLoginError("");
+        }
+    }, [email, password]);
+
     async function onSubmit(data: LoginFormData) {
         try {
             const response = await loginService(data);
+            setLoginError("");
 
             // console.log("FULL RESPONSE:", response);
             // console.log("USER:", response.user);
@@ -44,7 +60,30 @@ export default function LoginForm() {
                 navigate("/reservations", { replace: true });
             }
         } catch (error) {
-            console.error("Login failed", error);
+            if (axios.isAxiosError(error)){
+                if (error.response?.status === 403){
+                    setLoginError(
+                        "You don't have permission to access this application."
+                    );
+                    return;
+                }
+
+                if (error.response?.status === 500){
+                    setLoginError(
+                        "server error. Please try again later."
+                    );
+                    return;
+                }
+
+                setLoginError(
+                    error.response?.data?.message ??
+                    "Invalid email or password."
+                );
+                return;
+            }
+            setLoginError(
+                "Unexpected error occured."
+            );
         }
     }
 
@@ -122,6 +161,22 @@ export default function LoginForm() {
                         </p>
                     )}
                 </div>
+
+                {loginError && (
+                    <div
+                        className="
+                            rounded-lg
+                            border
+                            border-red-500/20
+                            bg-red-500/10
+                            px-4
+                            py-3
+                            text-sm
+                            text-red-400
+                        ">
+                        {loginError}
+                    </div>
+                )}
 
                 <Button
                     type="submit"

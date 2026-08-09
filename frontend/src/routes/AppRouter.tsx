@@ -11,9 +11,14 @@ import Users from "@/pages/Users";
 import Login from "@/pages/Login";
 import Unauthorized from "@/pages/Unauthorized.tsx";
 import ProtectedRoute from "@/routes/ProtectedRoute.tsx";
+import Register from "@/pages/Register.tsx";
 
 
 export const router = createBrowserRouter([
+    {
+        path: "/register",
+        element: <Register />,
+    },
     {
         path: "/login",
         element: <Login />,
