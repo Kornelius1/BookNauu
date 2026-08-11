@@ -22,4 +22,8 @@ public class RegisterRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 255)
     private String password;
+
+    @NotBlank(message = "Business name is required")
+    @Size(max = 150)
+    private String businessName;
 }

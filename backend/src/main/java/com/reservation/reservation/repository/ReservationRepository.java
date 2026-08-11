@@ -3,61 +3,93 @@ package com.reservation.reservation.repository;
 import com.reservation.auth.entity.User;
 import com.reservation.reservation.entity.Reservation;
 import com.reservation.reservation.entity.ReservationStatus;
-import com.reservation.room.entity.Room;
+import com.reservation.resource.entity.BookableResource;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
-public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+public interface ReservationRepository
+        extends JpaRepository<Reservation, Long> {
 
-    /**
-     * Semua reservasi milik customer
+    /*
+     * Semua reservation milik business.
      */
-    List<Reservation> findByCustomer(User customer);
+    List<Reservation> findByBusinessId(
+            Long businessId
+    );
 
-    /**
-     * Semua reservasi untuk suatu room
+    /*
+     * Reservation tertentu milik business.
      */
-    List<Reservation> findByRoom(Room room);
+    Optional<Reservation> findByIdAndBusinessId(
+            Long id,
+            Long businessId
+    );
 
-    /**
-     * Semua reservasi pada tanggal tertentu
+    /*
+     * Semua reservation customer
+     * dalam business tertentu.
      */
-    List<Reservation> findByReservationDate(LocalDate reservationDate);
+    List<Reservation> findByBusinessIdAndCustomer(
+            Long businessId,
+            User customer
+    );
 
-    /**
-     * Semua reservasi suatu room pada tanggal tertentu
+    /*
+     * Semua reservation resource
+     * dalam business tertentu.
      */
-    List<Reservation> findByRoomAndReservationDate(
-            Room room,
+    List<Reservation> findByBusinessIdAndResource(
+            Long businessId,
+            BookableResource resource
+    );
+
+    /*
+     * Semua reservation resource
+     * pada tanggal tertentu.
+     */
+    List<Reservation>
+    findByBusinessIdAndResourceAndReservationDate(
+            Long businessId,
+            BookableResource resource,
             LocalDate reservationDate
     );
 
-    /**
-     * Semua reservasi berdasarkan status
+    /*
+     * Semua reservation berdasarkan status
+     * dalam business tertentu.
      */
-    List<Reservation> findByStatus(ReservationStatus status);
+    List<Reservation> findByBusinessIdAndStatus(
+            Long businessId,
+            ReservationStatus status
+    );
 
-    /**
-     * Mengecek apakah ada jadwal yang bentrok
+    /*
+     * Mengecek konflik reservation.
      */
-    boolean existsByRoomAndReservationDateAndStartTimeLessThanAndEndTimeGreaterThan(
-            Room room,
+    boolean
+    existsByBusinessIdAndResourceAndReservationDateAndStartTimeLessThanAndEndTimeGreaterThan(
+            Long businessId,
+            BookableResource resource,
             LocalDate reservationDate,
             LocalTime endTime,
             LocalTime startTime
     );
 
-    boolean existsByRoomAndReservationDateAndStartTimeLessThanAndEndTimeGreaterThanAndIdNot(
-            Room room,
+    /*
+     * Mengecek konflik saat UPDATE,
+     * tetapi mengabaikan reservation yang sedang di-update.
+     */
+    boolean
+    existsByBusinessIdAndResourceAndReservationDateAndStartTimeLessThanAndEndTimeGreaterThanAndIdNot(
+            Long businessId,
+            BookableResource resource,
             LocalDate reservationDate,
             LocalTime endTime,
             LocalTime startTime,
             Long id
     );
-
-
-
 }

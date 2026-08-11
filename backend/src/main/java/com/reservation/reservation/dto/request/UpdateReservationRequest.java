@@ -13,7 +13,7 @@ import java.time.LocalTime;
 @Builder
 public class UpdateReservationRequest {
 
-    private Long roomId;
+    private Long resourceId;
 
     @FutureOrPresent
     private LocalDate reservationDate;

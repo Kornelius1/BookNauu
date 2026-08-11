@@ -1,0 +1,22 @@
+CREATE TABLE businesses
+(
+    id BIGSERIAL PRIMARY KEY,
+
+    name VARCHAR(150) NOT NULL,
+
+    slug VARCHAR(150) NOT NULL UNIQUE,
+
+    description VARCHAR(1000),
+
+    phone VARCHAR(30),
+
+    email VARCHAR(150),
+
+    address VARCHAR(500),
+
+    status VARCHAR(20) NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -25,9 +25,11 @@ public class ReservationResponse {
 
     private String customerName;
 
-    private Long roomId;
+    private Long resourceId;
+    private String resourceName;
 
-    private String roomName;
+    private Long resourceTypeId;
+    private String resourceTypeName;
 
     private BigDecimal totalPrice;
 
