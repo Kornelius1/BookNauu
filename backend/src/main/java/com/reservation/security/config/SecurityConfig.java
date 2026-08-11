@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableMethodSecurity
@@ -38,6 +39,26 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
+
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(
+                                (request, response, authException) -> {
+                                    response.setStatus(
+                                            HttpServletResponse.SC_UNAUTHORIZED
+                                    );
+                                    response.setContentType(
+                                            "application/json"
+                                    );
+                                    response.getWriter().write("""
+                                {
+                                    "error": "Unauthorized",
+                                    "message": "Authentication is required"
+                                }
+                                """);
+                                }
+                        )
+                )
+
                 // Authorization
                 .authorizeHttpRequests(auth -> auth
 
@@ -50,6 +71,10 @@ public class SecurityConfig {
 
                         // Authentication API
                         .requestMatchers("/api/v1/auth/**")
+                        .permitAll()
+
+                        // Public reservation API
+                        .requestMatchers("/api/public/**")
                         .permitAll()
 
                         // Semua endpoint lain harus login

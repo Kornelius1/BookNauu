@@ -1,4 +1,18 @@
+app:
+  frontend-url: http://localhost:5173
+
 spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:dummy_user}
+    password: ${MAIL_PASSWORD:dummy_password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   application:
     name: reservation-system
 

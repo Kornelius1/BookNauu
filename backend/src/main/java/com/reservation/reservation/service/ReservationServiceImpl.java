@@ -3,6 +3,9 @@ package com.reservation.reservation.service;
 import com.reservation.auth.entity.User;
 import com.reservation.auth.repository.UserRepository;
 import com.reservation.auth.service.AuthService;
+import com.reservation.business.entity.Business;
+import com.reservation.resource.entity.ResourceStatus;
+import com.reservation.business.service.BusinessMembershipService;
 import com.reservation.common.exception.ResourceNotFoundException;
 import com.reservation.common.exception.RoomUnavailableException;
 import com.reservation.reservation.dto.request.CreateReservationRequest;
@@ -13,15 +16,18 @@ import com.reservation.reservation.entity.Reservation;
 import com.reservation.reservation.entity.ReservationStatus;
 import com.reservation.reservation.mapper.ReservationMapper;
 import com.reservation.reservation.repository.ReservationRepository;
-import com.reservation.room.entity.Room;
-import com.reservation.room.entity.RoomStatus;
-import com.reservation.room.repository.RoomRepository;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import com.reservation.auth.entity.UserRole;
 import org.springframework.security.access.AccessDeniedException;
+import com.reservation.business.service.BusinessContextService;
+import com.reservation.resource.entity.BookableResource;
+import com.reservation.resource.repository.BookableResourceRepository;
+import com.reservation.customer.dto.request.CustomerRequest;
+import com.reservation.customer.entity.Customer;
+import com.reservation.customer.service.CustomerService;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -29,31 +35,54 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+
 @Service
 @RequiredArgsConstructor
 public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationRepository reservationRepository;
-    private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final ReservationMapper reservationMapper;
     private final AuthService authService;
+    private final BusinessContextService businessContextService;
+    private final BusinessMembershipService businessMembershipService;
+    private final BookableResourceRepository resourceRepository;
+    private final CustomerService customerService;
+
+
 
     @Override
-    public ReservationResponse create(CreateReservationRequest request) {
+    @Transactional
+    public ReservationResponse create(
+            CreateReservationRequest request
+    ) {
 
-        User user = getCurrentUser();
+        Long businessId =
+                businessContextService.getCurrentBusinessId();
 
-        Room room = roomRepository.findById(request.getRoomId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Room",
-                                "id",
-                                request.getRoomId()));
+        Customer customer =
+                customerService.findOrCreate(
+                        businessContextService.getCurrentBusiness(),
+                        request.getCustomer()
+                );
 
-        if (room.getStatus() != RoomStatus.AVAILABLE) {
+        BookableResource resource =
+                resourceRepository
+                        .findByIdAndBusinessId(
+                                request.getResourceId(),
+                                businessId
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Resource",
+                                        "id",
+                                        request.getResourceId()
+                                )
+                        );
+
+        if (resource.getStatus() != ResourceStatus.AVAILABLE) {
             throw new RoomUnavailableException(
-                    "Room is not available for reservation."
+                    "Resource is not available for reservation."
             );
         }
 
@@ -61,66 +90,95 @@ public class ReservationServiceImpl implements ReservationService {
                 request.getStartTime(),
                 request.getEndTime()
         );
+
         validateBusinessHours(
                 request.getStartTime(),
-                request.getEndTime());
-        validateReservationConflict(
-                room,
-                request.getReservationDate(),
-                request.getStartTime(),
-                request.getEndTime());
-
-        Reservation reservation = reservationMapper.toEntity(request);
-
-        reservation.setCustomer(user);
-        reservation.setRoom(room);
-        reservation.setStatus(ReservationStatus.PENDING);
-
-        // Hitung total harga otomatis
-        long hours = Duration.between(
-                request.getStartTime(),
                 request.getEndTime()
-        ).toHours();
-
-        reservation.setTotalPrice(
-                room.getPrice().multiply(BigDecimal.valueOf(hours))
         );
 
-        reservation = reservationRepository.save(reservation);
+        validateReservationConflict(
+                businessId,
+                resource,
+                request.getReservationDate(),
+                request.getStartTime(),
+                request.getEndTime()
+        );
+
+        Reservation reservation =
+                reservationMapper.toEntity(request);
+
+        reservation.setBusiness(
+                businessContextService.getCurrentBusiness()
+        );
+
+        reservation.setCustomer(customer);
+        reservation.setResource(resource);
+        reservation.setStatus(ReservationStatus.PENDING);
+
+        long hours =
+                Duration.between(
+                        request.getStartTime(),
+                        request.getEndTime()
+                ).toHours();
+
+        reservation.setTotalPrice(
+                resource.getPrice()
+                        .multiply(BigDecimal.valueOf(hours))
+        );
+
+        reservation =
+                reservationRepository.save(reservation);
 
         return reservationMapper.toResponse(reservation);
     }
 
+
     @Override
+    @Transactional
     public ReservationResponse update(
             Long id,
             UpdateReservationRequest request
     ) {
 
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Reservation",
-                                "id",
-                                id));
+        Long businessId =
+                businessContextService.getCurrentBusinessId();
 
-        validateReservationAccess(reservation);
+        Reservation reservation =
+                reservationRepository
+                        .findByIdAndBusinessId(
+                                id,
+                                businessId
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Reservation",
+                                        "id",
+                                        id
+                                )
+                        );
 
-        // Tentukan room yang akan digunakan
-        Room room = reservation.getRoom();
+        BookableResource resource =
+                reservation.getResource();
 
-        if (request.getRoomId() != null &&
-                !request.getRoomId().equals(room.getId())) {
+        if (request.getResourceId() != null &&
+                !request.getResourceId()
+                        .equals(resource.getId())) {
 
-            room = roomRepository.findById(request.getRoomId())
-                    .orElseThrow(() ->
-                            new ResourceNotFoundException(
-                                    "Room",
-                                    "id",
-                                    request.getRoomId()));
+            resource =
+                    resourceRepository
+                            .findByIdAndBusinessId(
+                                    request.getResourceId(),
+                                    businessId
+                            )
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Resource",
+                                            "id",
+                                            request.getResourceId()
+                                    )
+                            );
         }
 
-        // Gunakan nilai baru jika dikirim, jika tidak gunakan nilai lama
         LocalDate reservationDate =
                 request.getReservationDate() != null
                         ? request.getReservationDate()
@@ -136,57 +194,84 @@ public class ReservationServiceImpl implements ReservationService {
                         ? request.getEndTime()
                         : reservation.getEndTime();
 
-        // Validasi
-        validateReservationTime(startTime, endTime);
+        validateReservationTime(
+                startTime,
+                endTime
+        );
 
-        validateBusinessHours(startTime, endTime);
+        validateBusinessHours(
+                startTime,
+                endTime
+        );
 
         validateReservationConflict(
                 reservation.getId(),
-                room,
+                businessId,
+                resource,
                 reservationDate,
                 startTime,
                 endTime
         );
 
-        // Baru update entity
-        reservationMapper.updateEntity(request, reservation);
-        reservation.setRoom(room);
+        reservationMapper.updateEntity(
+                request,
+                reservation
+        );
 
-        // Hitung ulang total harga
-        long hours = Duration.between(startTime, endTime).toHours();
+        reservation.setResource(resource);
+
+        long hours =
+                Duration.between(
+                        startTime,
+                        endTime
+                ).toHours();
 
         reservation.setTotalPrice(
-                room.getPrice()
+                resource.getPrice()
                         .multiply(BigDecimal.valueOf(hours))
         );
 
-        reservation = reservationRepository.save(reservation);
+        reservation =
+                reservationRepository.save(reservation);
 
         return reservationMapper.toResponse(reservation);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ReservationResponse getById(Long id) {
 
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Reservation",
-                                "id",
-                                id));
+        Long businessId =
+                businessContextService.getCurrentBusinessId();
 
+        Reservation reservation =
+                reservationRepository
+                        .findByIdAndBusinessId(
+                                id,
+                                businessId
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Reservation",
+                                        "id",
+                                        id
+                                )
+                        );
 
-        validateReservationAccess(reservation);
-
-
-        return reservationMapper.toResponse(reservation);
+        return reservationMapper.toResponse(
+                reservation
+        );
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ReservationResponse> getAll() {
 
-        return reservationRepository.findAll()
+        Long businessId =
+                businessContextService.getCurrentBusinessId();
+
+        return reservationRepository
+                .findByBusinessId(businessId)
                 .stream()
                 .map(reservationMapper::toResponse)
                 .toList();
@@ -197,47 +282,76 @@ public class ReservationServiceImpl implements ReservationService {
 
         User user = getCurrentUser();
 
-        return reservationRepository.findByCustomer(user)
+
+        Long businessId =
+                businessContextService.getCurrentBusinessId();
+
+        return reservationRepository
+                .findByBusinessIdAndCustomer(businessId, user)
                 .stream()
                 .map(reservationMapper::toResponse)
                 .toList();
     }
 
     @Override
+    @Transactional
     public ReservationResponse updateStatus(
             Long id,
             ReservationStatusRequest request
     ) {
-        validateAdmin();
 
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Reservation",
-                                "id",
-                                id));
+        businessMembershipService.requireOwnerOrAdmin();
+
+        Long businessId =
+                businessContextService.getCurrentBusinessId();
+
+        Reservation reservation =
+                reservationRepository
+                        .findByIdAndBusinessId(
+                                id,
+                                businessId
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Reservation",
+                                        "id",
+                                        id
+                                )
+                        );
 
         reservation.setStatus(request.getStatus());
 
-        reservation = reservationRepository.save(reservation);
+        reservation =
+                reservationRepository.save(reservation);
 
         return reservationMapper.toResponse(reservation);
     }
 
-        @Override
-        public void delete(Long id) {
+    @Override
+    @Transactional
+    public void delete(Long id) {
 
-            Reservation reservation = reservationRepository.findById(id)
-                    .orElseThrow(() ->
-                            new ResourceNotFoundException(
-                                    "Reservation",
-                                    "id",
-                                    id));
+        businessMembershipService.requireOwnerOrAdmin();
 
-            validateReservationAccess(reservation);
+        Long businessId =
+                businessContextService.getCurrentBusinessId();
 
-            reservationRepository.delete(reservation);
-        }
+        Reservation reservation =
+                reservationRepository
+                        .findByIdAndBusinessId(
+                                id,
+                                businessId
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Reservation",
+                                        "id",
+                                        id
+                                )
+                        );
+
+        reservationRepository.delete(reservation);
+    }
 
     /**
      * Ambil user yang sedang login
@@ -257,33 +371,25 @@ public class ReservationServiceImpl implements ReservationService {
                                 email));
     }
 
-    private void validateReservationAccess(Reservation reservation) {
+    private void validateReservationAccess(
+            Reservation reservation
+    ) {
 
-        User currentUser = getCurrentUser();
+        Business currentBusiness =
+                businessContextService
+                        .getCurrentBusiness();
 
-        // Admin boleh mengakses semua reservation
-        if (currentUser.getRole() == UserRole.ADMIN) {
-            return;
-        }
 
-        // Customer hanya boleh mengakses reservation miliknya
-        if (!reservation.getCustomer().getId().equals(currentUser.getId())) {
+        if (!reservation.getBusiness()
+                .getId()
+                .equals(currentBusiness.getId())) {
+
             throw new AccessDeniedException(
-                    "You are not allowed to access this reservation"
+                    "You do not have access to this reservation"
             );
         }
     }
 
-    private void validateAdmin() {
-
-        User currentUser = getCurrentUser();
-
-        if (currentUser.getRole() != UserRole.ADMIN) {
-            throw new AccessDeniedException(
-                    "Only admin can update reservation status"
-            );
-        }
-    }
 
     private void validateReservationTime(
             LocalTime startTime,
@@ -318,7 +424,8 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     private void validateReservationConflict(
-            Room room,
+            Long businessId,
+            BookableResource resource,
             LocalDate reservationDate,
             LocalTime startTime,
             LocalTime endTime
@@ -326,8 +433,9 @@ public class ReservationServiceImpl implements ReservationService {
 
         boolean conflict =
                 reservationRepository
-                        .existsByRoomAndReservationDateAndStartTimeLessThanAndEndTimeGreaterThan(
-                                room,
+                        .existsByBusinessIdAndResourceAndReservationDateAndStartTimeLessThanAndEndTimeGreaterThan(
+                                businessId,
+                                resource,
                                 reservationDate,
                                 endTime,
                                 startTime
@@ -335,14 +443,15 @@ public class ReservationServiceImpl implements ReservationService {
 
         if (conflict) {
             throw new IllegalArgumentException(
-                    "Selected time slot is already reserved."
+                    "Resource is already reserved for the selected time."
             );
         }
     }
 
     private void validateReservationConflict(
             Long reservationId,
-            Room room,
+            Long businessId,
+            BookableResource resource,
             LocalDate reservationDate,
             LocalTime startTime,
             LocalTime endTime
@@ -350,8 +459,9 @@ public class ReservationServiceImpl implements ReservationService {
 
         boolean conflict =
                 reservationRepository
-                        .existsByRoomAndReservationDateAndStartTimeLessThanAndEndTimeGreaterThanAndIdNot(
-                                room,
+                        .existsByBusinessIdAndResourceAndReservationDateAndStartTimeLessThanAndEndTimeGreaterThanAndIdNot(
+                                businessId,
+                                resource,
                                 reservationDate,
                                 endTime,
                                 startTime,
@@ -360,7 +470,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         if (conflict) {
             throw new IllegalArgumentException(
-                    "Selected time slot is already reserved."
+                    "Resource is already reserved for the selected time."
             );
         }
     }

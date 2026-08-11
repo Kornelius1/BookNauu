@@ -1,89 +1,184 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { LoginResponse, User } from "@/types/auth";
-import { getCurrentUser } from "@/services/auth.service";
+import {
+    createContext,
+    useEffect,
+    useState,
+    type ReactNode,
+} from "react";
+
+import {
+    getCurrentUser,
+    logout as logoutService,
+} from "@/services/auth.service";
+
+import type {
+    User,
+    BusinessContext,
+    LoginResponse,
+} from "@/types/auth";
+
 
 interface AuthContextType {
+
     user: User | null;
-    token: string | null;
-    loading: boolean;
+
+    business: BusinessContext | null;
+
     isAuthenticated: boolean;
-    login: (response: LoginResponse) => void;
+
+    isLoading: boolean;
+
+    login: (
+        response: LoginResponse
+    ) => void;
+
     logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
 
-interface Props {
+export const AuthContext =
+    createContext<AuthContextType | undefined>(
+        undefined
+    );
+
+
+interface AuthProviderProps {
     children: ReactNode;
 }
 
 
-export function AuthProvider({ children }: Props) {
-    const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState(localStorage.getItem("token"));
-    const [loading, setLoading] = useState(true);
+export function AuthProvider({
+                                 children,
+                             }: AuthProviderProps) {
+
+    const [user, setUser] =
+        useState<User | null>(null);
+
+    const [business, setBusiness] =
+        useState<BusinessContext | null>(null);
+
+    const [isLoading, setIsLoading] =
+        useState(true);
+
 
     useEffect(() => {
+
         async function initializeAuth() {
+
+            const token =
+                localStorage.getItem("token");
+
+
+            /*
+             * Tidak ada token.
+             *
+             * Tidak perlu memanggil /auth/me.
+             */
             if (!token) {
-                setLoading(false);
+
+                setUser(null);
+                setBusiness(null);
+                setIsLoading(false);
+
                 return;
             }
 
-            try {
-                const currentUser = await getCurrentUser();
-                setUser(currentUser);
 
-                localStorage.setItem("user", JSON.stringify({
-                    id: currentUser.id,
-                    name: currentUser.fullName,
-                    avatar: currentUser.avatar
-                }));
+            /*
+             * Token ada.
+             *
+             * Validasi token dengan backend
+             * melalui /auth/me.
+             */
+            try {
+
+                const response =
+                    await getCurrentUser();
+
+
+                setUser(response.user);
+
+                setBusiness(response.business);
+
             } catch (error) {
-                console.error("Sesi tidak valid", error);
-                logout();
+
+                console.error(
+                    "Failed to restore authentication",
+                    error
+                );
+
+
+                /*
+                 * Token invalid / expired.
+                 */
+                logoutService();
+
+                setUser(null);
+
+                setBusiness(null);
+
             } finally {
-                setLoading(false);
+
+                setIsLoading(false);
             }
         }
 
+
         initializeAuth();
-    }, [token]);
 
-    function login(response: LoginResponse) {
-        localStorage.setItem("token", response.token);
+    }, []);
 
-        setToken(response.token);
+
+    /*
+     * Dipanggil setelah login berhasil.
+     */
+    function login(
+        response: LoginResponse
+    ) {
+
+        localStorage.setItem(
+            "token",
+            response.token
+        );
+
         setUser(response.user);
+
+        setBusiness(response.business);
     }
 
+
+    /*
+     * Logout.
+     */
     function logout() {
-        localStorage.removeItem("token");
 
-        setToken(null);
+        logoutService();
+
         setUser(null);
+
+        setBusiness(null);
     }
+
+
+    const value: AuthContextType = {
+
+        user,
+
+        business,
+
+        isAuthenticated:
+            user !== null,
+
+        isLoading,
+
+        login,
+
+        logout,
+    };
+
 
     return (
-        <AuthContext.Provider
-            value={{
-                user,
-                token,
-                loading,
-                login,
-                logout,
-                isAuthenticated: !!token,
-            }}
-        >
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
-}
-
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth harus digunakan di dalam AuthProvider");
-    }
-    return context;
 }

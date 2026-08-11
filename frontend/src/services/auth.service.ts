@@ -1,44 +1,50 @@
-import axiosInstance from "@/api/axios";
+import axios from "axios";
 
-import type { ApiResponse } from "@/types/api";
-import type { LoginResponse, User } from "@/types/auth";
 import type {
-    LoginFormData,
-    RegisterFormData,
-} from "@/schemas/auth.schema";
+    LoginResponse,
+    CurrentUserResponse,
+} from "@/types/auth";
 
+import type { LoginFormData } from "@/schemas/auth.schema";
 
-export async function register(
-    data: RegisterFormData
-){
-    const response = await axiosInstance.post(
-        "/auth/register",
-        {
-            fullName: data.fullName,
-            email: data.email,
-            password: data.password,
-        }
-    );
-    return response.data.data;
-}
+const API_URL = "http://localhost:8080/api/v1/auth";
+
 
 export async function login(
     data: LoginFormData
 ): Promise<LoginResponse> {
-    const response =
-        await axiosInstance.post<ApiResponse<LoginResponse>>(
-            "/auth/login",
-            data
-        );
+
+    const response = await axios.post(
+        `${API_URL}/login`,
+        data
+    );
+
     return response.data.data;
 }
 
-export async function getCurrentUser(): Promise<User> {
 
-    const response =
-        await axiosInstance.get<ApiResponse<User>>(
-            "/auth/me"
-        );
+export async function getCurrentUser(): Promise<CurrentUserResponse> {
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        throw new Error("No authentication token found");
+    }
+
+    const response = await axios.get(
+        `${API_URL}/me`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
 
     return response.data.data;
+}
+
+
+export function logout(): void {
+
+    localStorage.removeItem("token");
 }

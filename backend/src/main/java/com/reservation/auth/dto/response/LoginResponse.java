@@ -8,8 +8,8 @@ import lombok.Getter;
 public class LoginResponse {
 
     private String token;
-    private String accessToken;
+    @Builder.Default
     private String tokenType = "Bearer";
-    private Long expiresIn;
     private UserResponse user;
+    private BusinessContextResponse business;
 }

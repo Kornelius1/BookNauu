@@ -1,8 +1,9 @@
 package com.reservation.reservation.entity;
 
-import com.reservation.auth.entity.User;
+import com.reservation.customer.entity.Customer;
+import com.reservation.business.entity.Business;
 import com.reservation.common.entity.BaseEntity;
-import com.reservation.room.entity.Room;
+import com.reservation.resource.entity.BookableResource;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,7 +33,12 @@ public class Reservation extends BaseEntity {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
-    @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
+    @Column(
+            name = "total_price",
+            nullable = false,
+            precision = 12,
+            scale = 2
+    )
     private BigDecimal totalPrice;
 
     @Column(length = 500)
@@ -42,12 +48,45 @@ public class Reservation extends BaseEntity {
     @Column(nullable = false, length = 20)
     private ReservationStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
-    private User customer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", nullable = false)
-    private Room room;
+    /*
+     * Business / Tenant
+     *
+     * Setiap reservation harus dimiliki
+     * oleh tepat satu business.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "business_id",
+            nullable = false
+    )
+    private Business business;
 
+
+    /*
+     * Customer
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "customer_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_reservations_customer"
+            )
+    )
+    private Customer customer;
+
+
+    /*
+     * Resource
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "resource_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_reservations_resource"
+            )
+    )
+    private BookableResource resource;
 }
