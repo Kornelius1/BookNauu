@@ -93,6 +93,11 @@ const ResourceFormDialog = ({
         setErrors({});
     }, [open, resource]);
 
+    const selectedResourceType = resourceTypes.find(
+        (type) =>
+            type.id.toString() === formData.resourceTypeId
+    );
+
     const handleChange = (field: keyof FormData, value: string) => {
         setFormData(current => ({
             ...current,
@@ -235,7 +240,11 @@ const ResourceFormDialog = ({
                             }}
                         >
                             <SelectTrigger id="resourceType">
-                                <SelectValue placeholder="Select resource type" />
+                                <SelectValue
+                                    placeholder="Select resource type"
+                                >
+                                    {selectedResourceType?.name}
+                                </SelectValue>
                             </SelectTrigger>
 
                             <SelectContent>

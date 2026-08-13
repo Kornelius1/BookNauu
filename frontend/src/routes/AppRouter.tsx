@@ -6,9 +6,11 @@ import Reservations from "@/pages/Reservation";
 import Unauthorized from "@/pages/Unauthorized";
 import AcceptInvitation from "@/pages/AcceptInvitation";
 import Resources from "@/pages/Resources";
+import ResourceTypes from "@/pages/ResourceTypes";
 
 import AppLayout from "@/components/layout/AppLayout";
 import ProtectedRoute from "./ProtectedRoute";
+import MembershipPage from "@/pages/MembershipPage.tsx";
 
 export default function AppRouter() {
     return (
@@ -42,6 +44,11 @@ export default function AppRouter() {
                     />
 
                     <Route
+                        path="/resource-types"
+                        element={<ResourceTypes />}
+                    />
+
+                    <Route
                         path="/dashboard"
                         element={<Dashboard />}
                     />
@@ -49,6 +56,11 @@ export default function AppRouter() {
                     <Route
                         path="/resources"
                         element={<Resources />}
+                    />
+
+                    <Route
+                        path="/membership"
+                        element={<MembershipPage />}
                     />
 
                 </Route>

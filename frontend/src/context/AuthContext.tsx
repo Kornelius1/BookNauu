@@ -150,6 +150,7 @@ export function AuthProvider({
         response: LoginResponse
     ) {
 
+        localStorage.removeItem("token");
         localStorage.setItem(
             "token",
             response.token
