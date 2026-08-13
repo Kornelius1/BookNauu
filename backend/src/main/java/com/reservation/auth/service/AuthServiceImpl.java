@@ -8,12 +8,10 @@ import com.reservation.auth.dto.response.RegisterResponse;
 import com.reservation.auth.entity.User;
 import com.reservation.auth.mapper.UserMapper;
 import com.reservation.auth.repository.UserRepository;
-import com.reservation.business.entity.Business;
-import com.reservation.business.entity.BusinessMembership;
-import com.reservation.business.entity.BusinessRole;
-import com.reservation.business.entity.BusinessStatus;
+import com.reservation.business.entity.*;
 import com.reservation.business.mapper.BusinessMapper;
 import com.reservation.business.repository.BusinessMembershipRepository;
+import com.reservation.business.repository.BusinessOperatingHoursRepository;
 import com.reservation.business.repository.BusinessRepository;
 import com.reservation.common.exception.DuplicateResourceException;
 import com.reservation.common.exception.ResourceNotFoundException;
@@ -27,6 +25,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.reservation.auth.dto.response.CurrentUserResponse;
+import org.springframework.security.access.AccessDeniedException;
+
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 
 
 @Service
@@ -48,6 +50,8 @@ public class AuthServiceImpl implements AuthService {
     private final BusinessMembershipRepository businessMembershipRepository;
 
     private final BusinessMapper businessMapper;
+
+    private final BusinessOperatingHoursRepository businessOperatingHoursRepository;
 
 
     @Override
@@ -94,6 +98,7 @@ public class AuthServiceImpl implements AuthService {
 
         businessMembershipRepository.save(membership);
 
+        createDefaultOperatingHours(business);
 
         // Response
         return RegisterResponse.builder()
@@ -216,6 +221,17 @@ public class AuthServiceImpl implements AuthService {
                         .getContext()
                         .getAuthentication();
 
+        System.out.println("=== CURRENT USER ENTITY ===");
+        System.out.println("authentication = " + authentication);
+
+        if (authentication == null
+                || !(authentication.getPrincipal() instanceof User)) {
+
+            throw new AccessDeniedException(
+                    "User is not authenticated"
+            );
+        }
+
         return (User) authentication.getPrincipal();
     }
 
@@ -226,6 +242,41 @@ public class AuthServiceImpl implements AuthService {
 
             throw new DuplicateResourceException(
                     "Email already exists"
+            );
+        }
+    }
+
+    private void createDefaultOperatingHours(
+            Business business
+    ) {
+
+        for (DayOfWeek day : DayOfWeek.values()) {
+
+            BusinessOperatingHours operatingHours =
+                    new BusinessOperatingHours();
+
+            operatingHours.setBusiness(business);
+            operatingHours.setDayOfWeek(day);
+
+            if (day == DayOfWeek.SUNDAY) {
+
+                operatingHours.setClosed(true);
+                operatingHours.setOpenTime(null);
+                operatingHours.setCloseTime(null);
+
+            } else {
+
+                operatingHours.setClosed(false);
+                operatingHours.setOpenTime(
+                        LocalTime.of(14, 0)
+                );
+                operatingHours.setCloseTime(
+                        LocalTime.of(22, 0)
+                );
+            }
+
+            businessOperatingHoursRepository.save(
+                    operatingHours
             );
         }
     }

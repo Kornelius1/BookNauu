@@ -4,6 +4,8 @@ import com.reservation.auth.entity.User;
 import com.reservation.auth.repository.UserRepository;
 import com.reservation.auth.service.AuthService;
 import com.reservation.business.entity.Business;
+import com.reservation.business.entity.BusinessOperatingHours;
+import com.reservation.business.repository.BusinessOperatingHoursRepository;
 import com.reservation.resource.entity.ResourceStatus;
 import com.reservation.business.service.BusinessMembershipService;
 import com.reservation.common.exception.ResourceNotFoundException;
@@ -25,11 +27,11 @@ import org.springframework.security.access.AccessDeniedException;
 import com.reservation.business.service.BusinessContextService;
 import com.reservation.resource.entity.BookableResource;
 import com.reservation.resource.repository.BookableResourceRepository;
-import com.reservation.customer.dto.request.CustomerRequest;
 import com.reservation.customer.entity.Customer;
 import com.reservation.customer.service.CustomerService;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -48,6 +50,7 @@ public class ReservationServiceImpl implements ReservationService {
     private final BusinessMembershipService businessMembershipService;
     private final BookableResourceRepository resourceRepository;
     private final CustomerService customerService;
+    private final BusinessOperatingHoursRepository businessOperatingHoursRepository;
 
 
 
@@ -92,6 +95,8 @@ public class ReservationServiceImpl implements ReservationService {
         );
 
         validateBusinessHours(
+                businessId,
+                request.getReservationDate(),
                 request.getStartTime(),
                 request.getEndTime()
         );
@@ -200,6 +205,8 @@ public class ReservationServiceImpl implements ReservationService {
         );
 
         validateBusinessHours(
+                businessId,
+                reservationDate,
                 startTime,
                 endTime
         );
@@ -403,22 +410,56 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
-    private static final LocalTime OPEN_TIME =
-            LocalTime.of(14, 0);
-
-    private static final LocalTime CLOSE_TIME =
-            LocalTime.of(22, 0);
-
     private void validateBusinessHours(
+            Long businessId,
+            LocalDate reservationDate,
             LocalTime startTime,
             LocalTime endTime
     ) {
 
-        if (startTime.isBefore(OPEN_TIME)
-                || endTime.isAfter(CLOSE_TIME)) {
+        DayOfWeek dayOfWeek =
+                reservationDate.getDayOfWeek();
+
+        BusinessOperatingHours operatingHours =
+                businessOperatingHoursRepository
+                        .findByBusinessIdAndDayOfWeek(
+                                businessId,
+                                dayOfWeek
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Business operating hours "
+                                                + "are not configured."
+                                )
+                        );
+
+        if (operatingHours.isClosed()) {
 
             throw new IllegalArgumentException(
-                    "Reservation time is outside business hours."
+                    "Business is closed on "
+                            + dayOfWeek
+            );
+        }
+
+        LocalTime openTime =
+                operatingHours.getOpenTime();
+
+        LocalTime closeTime =
+                operatingHours.getCloseTime();
+
+        if (openTime == null || closeTime == null) {
+
+            throw new IllegalArgumentException(
+                    "Business operating hours are invalid."
+            );
+        }
+
+        if (startTime.isBefore(openTime)
+                || endTime.isAfter(closeTime)) {
+
+            throw new IllegalArgumentException(
+                    "Reservation time is outside "
+                            + "business hours."
             );
         }
     }

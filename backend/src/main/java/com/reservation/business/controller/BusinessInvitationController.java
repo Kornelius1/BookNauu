@@ -4,6 +4,7 @@ import com.reservation.auth.dto.response.UserResponse;
 import com.reservation.business.dto.request.AcceptInvitationRequest;
 import com.reservation.business.dto.request.InviteAdminRequest;
 import com.reservation.business.service.BusinessInvitationService;
+import com.reservation.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,15 +18,19 @@ public class BusinessInvitationController {
     private final BusinessInvitationService businessInvitationService;
 
     @PostMapping
-    public ResponseEntity<Void> inviteAdmin(
+    public ResponseEntity<ApiResponse<Void>> inviteAdmin(
             @Valid @RequestBody InviteAdminRequest request
     ) {
 
         businessInvitationService.inviteAdmin(request);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Admin invitation sent successfully",
+                        null
+                )
+        );
     }
-
     @PostMapping("/accept")
     public ResponseEntity<UserResponse> acceptInvitation(
             @Valid @RequestBody AcceptInvitationRequest request

@@ -47,7 +47,11 @@ public class BusinessInvitationServiceImpl
     @Transactional
     public void inviteAdmin(InviteAdminRequest request) {
 
+        System.out.println("=== INVITE ADMIN START ===");
+
         businessMembershipService.requireOwner();
+
+        System.out.println("=== REQUIRE OWNER PASSED ===");
 
         String email = request.getEmail()
                 .trim()
@@ -55,6 +59,14 @@ public class BusinessInvitationServiceImpl
 
         Business business =
                 businessContextService.getCurrentBusiness();
+
+        System.out.println(
+                "=== CURRENT BUSINESS: "
+                        + business.getId()
+                        + " / "
+                        + business.getName()
+                        + " ==="
+        );
 
         User existingUser =
                 userRepository.findByEmail(email)

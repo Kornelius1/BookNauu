@@ -5,6 +5,7 @@ import com.reservation.business.entity.Business;
 import com.reservation.business.entity.BusinessMembership;
 import com.reservation.business.entity.BusinessRole;
 import com.reservation.business.repository.BusinessMembershipRepository;
+import com.reservation.common.exception.ForbiddenException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,7 @@ public class BusinessMembershipServiceImpl
         if (membership.getRole()
                 != BusinessRole.OWNER) {
 
-            throw new AccessDeniedException(
+            throw new ForbiddenException(
                     "Only business owner can perform this action"
             );
         }
