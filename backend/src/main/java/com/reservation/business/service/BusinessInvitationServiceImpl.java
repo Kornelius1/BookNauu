@@ -117,16 +117,23 @@ public class BusinessInvitationServiceImpl
 
         invitationRepository.save(invitation);
 
+        System.out.println("=== INVITATION SAVED ===");
+
         String invitationLink =
                 frontendUrl
                         + "/accept-invitation?token="
                         + invitation.getToken();
+
+        System.out.println("=== INVITATION LINK ===");
+        System.out.println(invitationLink);
+        System.out.println("=== BEFORE SEND EMAIL ===");
 
         emailService.sendAdminInvitation(
                 email,
                 business.getName(),
                 invitationLink
         );
+        System.out.println("=== AFTER SEND EMAIL ===");
     }
 
     @Override

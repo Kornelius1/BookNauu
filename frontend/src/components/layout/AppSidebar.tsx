@@ -5,7 +5,7 @@ import {
     Tags,
     LogOut,
     Settings,
-    Users,
+    UsersRound,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -44,9 +44,9 @@ const menuItems = [
         icon: CalendarDays,
     },
     {
-        title: "Users",
-        url: "/users",
-        icon: Users,
+        title: "Membership",
+        url: "/membership",
+        icon: UsersRound,
     },
     {
         title: "Settings",

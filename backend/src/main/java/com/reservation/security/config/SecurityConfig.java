@@ -16,6 +16,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -31,7 +37,7 @@ public class SecurityConfig {
 
         http
                 //ini nanti hapus
-                .cors(cors ->{})
+                .cors(cors -> {})
                 // REST API tidak menggunakan CSRF
                 .csrf(csrf -> csrf.disable())
 
@@ -62,11 +68,15 @@ public class SecurityConfig {
                 // Authorization
                 .authorizeHttpRequests(auth -> auth
 
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
+
                         // Swagger
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/api/v1/business/team/invitations/accept"
                         ).permitAll()
 
                         // Authentication API

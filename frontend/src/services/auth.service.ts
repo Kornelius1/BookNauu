@@ -14,6 +14,8 @@ export async function login(
     data: LoginFormData
 ): Promise<LoginResponse> {
 
+    localStorage.removeItem("token");
+
     const response = await axios.post(
         `${API_URL}/login`,
         data
