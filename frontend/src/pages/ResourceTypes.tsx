@@ -290,12 +290,6 @@ const ResourceTypes = () => {
                                     </div>
 
                                     <div className="mt-6 flex items-center justify-between border-t pt-4">
-                                        <span className="text-xs text-muted-foreground">
-                                            ID:{" "}
-                                            {
-                                                resourceType.id
-                                            }
-                                        </span>
 
                                         <div className="flex gap-2">
                                             <Button
