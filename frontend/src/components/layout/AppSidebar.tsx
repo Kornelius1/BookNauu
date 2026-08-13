@@ -1,7 +1,7 @@
 import {
     CalendarDays,
-    DoorOpen,
     LayoutDashboard,
+    Boxes,
     LogOut,
     Settings,
     Users,
@@ -28,9 +28,9 @@ const menuItems = [
         icon: LayoutDashboard,
     },
     {
-        title: "Rooms",
-        url: "/rooms",
-        icon: DoorOpen,
+        title: "Resource",
+        url: "/resources",
+        icon: Boxes,
     },
     {
         title: "Reservations",
