@@ -2,6 +2,7 @@ import {
     CalendarDays,
     LayoutDashboard,
     Boxes,
+    Tags,
     LogOut,
     Settings,
     Users,
@@ -31,6 +32,11 @@ const menuItems = [
         title: "Resource",
         url: "/resources",
         icon: Boxes,
+    },
+    {
+        title:"Resource Type",
+        url: "/resource-types",
+        icon: Tags,
     },
     {
         title: "Reservations",

@@ -6,6 +6,7 @@ import Reservations from "@/pages/Reservation";
 import Unauthorized from "@/pages/Unauthorized";
 import AcceptInvitation from "@/pages/AcceptInvitation";
 import Resources from "@/pages/Resources";
+import ResourceTypes from "@/pages/ResourceTypes";
 
 import AppLayout from "@/components/layout/AppLayout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -39,6 +40,11 @@ export default function AppRouter() {
                     <Route
                         path="/reservations"
                         element={<Reservations />}
+                    />
+
+                    <Route
+                        path="/resource-types"
+                        element={<ResourceTypes />}
                     />
 
                     <Route
