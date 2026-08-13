@@ -1,16 +1,24 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Reservations from "@/pages/Reservation";
 import Unauthorized from "@/pages/Unauthorized";
 import AcceptInvitation from "@/pages/AcceptInvitation";
+import Resources from "@/pages/Resources";
 
+import AppLayout from "@/components/layout/AppLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRouter() {
     return (
         <Routes>
+
+            {/* Root */}
+            <Route
+                path="/"
+                element={<Navigate to="/login" replace />}
+            />
 
             {/* Public */}
             <Route
@@ -23,37 +31,29 @@ export default function AppRouter() {
                 element={<AcceptInvitation />}
             />
 
-
-            {/* Protected - authenticated */}
+            {/* Protected */}
             <Route element={<ProtectedRoute />}>
 
-                <Route
-                    path="/reservations"
-                    element={<Reservations />}
-                />
+                <Route element={<AppLayout />}>
 
-            </Route>
-
-
-            {/* Protected - OWNER / ADMIN */}
-            <Route
-                element={
-                    <ProtectedRoute
-                        allowedRoles={[
-                            "OWNER",
-                            "ADMIN",
-                        ]}
+                    <Route
+                        path="/reservations"
+                        element={<Reservations />}
                     />
-                }
-            >
 
-                <Route
-                    path="/dashboard"
-                    element={<Dashboard />}
-                />
+                    <Route
+                        path="/dashboard"
+                        element={<Dashboard />}
+                    />
+
+                    <Route
+                        path="/resources"
+                        element={<Resources />}
+                    />
+
+                </Route>
 
             </Route>
-
 
             {/* Unauthorized */}
             <Route

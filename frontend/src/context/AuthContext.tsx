@@ -1,9 +1,11 @@
 import {
     createContext,
+    useContext,
     useEffect,
     useState,
     type ReactNode,
 } from "react";
+
 
 import {
     getCurrentUser,
@@ -39,6 +41,19 @@ export const AuthContext =
     createContext<AuthContextType | undefined>(
         undefined
     );
+
+
+export function useAuth() {
+    const context = useContext(AuthContext);
+
+    if (context === undefined) {
+        throw new Error(
+            "useAuth must be used within an AuthProvider"
+        );
+    }
+
+    return context;
+}
 
 
 interface AuthProviderProps {
@@ -182,3 +197,4 @@ export function AuthProvider({
         </AuthContext.Provider>
     );
 }
+
