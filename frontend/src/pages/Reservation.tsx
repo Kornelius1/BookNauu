@@ -139,11 +139,21 @@ export default function Reservation() {
         setStatusDialogOpen(true);
     };
 
-    const handleDelete = (reservation: ReservationResponse) => {
-        console.log(
-            "Delete reservation:",
-            reservation
-        );
+    const handleDelete = async (
+        reservation: ReservationResponse
+    ) => {
+        try {
+            await reservationService.delete(
+                reservation.id
+            );
+
+            await fetchReservations();
+        } catch (err) {
+            console.error(
+                "Failed to delete reservation:",
+                err
+            );
+        }
     };
 
     const handleEditSubmit = async (
