@@ -76,7 +76,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
-                                "/api/v1/business/team/invitations/accept"
+                                "/api/v1/business/team/invitations/accept",
+                                "/api/v1/integrations/google/calendar/callback"
                         ).permitAll()
 
                         // Authentication API

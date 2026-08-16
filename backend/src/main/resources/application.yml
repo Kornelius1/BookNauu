@@ -33,6 +33,14 @@ spring:
 server:
   port: 8080
 
+google:
+  calendar:
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
+    redirect-uri: ${GOOGLE_REDIRECT_URI}
+    frontend-url: ${FRONTEND_URL}
+    backend-url: https://abc123.ngrok-free.app/api/v1/integrations/google/calendar/webhook
+
 jwt:
   secret: 4a6b5c8d9e1f2a3b4c5d6e7f8g9h0j1k2l3m4n5p6q7r8s9t
   expiration: 3600000

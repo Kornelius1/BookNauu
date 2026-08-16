@@ -6,6 +6,7 @@ import com.reservation.auth.service.AuthService;
 import com.reservation.business.entity.Business;
 import com.reservation.business.entity.BusinessOperatingHours;
 import com.reservation.business.repository.BusinessOperatingHoursRepository;
+import com.reservation.integration.google.service.GoogleCalendarService;
 import com.reservation.resource.entity.ResourceStatus;
 import com.reservation.business.service.BusinessMembershipService;
 import com.reservation.common.exception.ResourceNotFoundException;
@@ -29,6 +30,7 @@ import com.reservation.resource.entity.BookableResource;
 import com.reservation.resource.repository.BookableResourceRepository;
 import com.reservation.customer.entity.Customer;
 import com.reservation.customer.service.CustomerService;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -39,6 +41,7 @@ import java.util.List;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ReservationServiceImpl implements ReservationService {
 
@@ -51,7 +54,7 @@ public class ReservationServiceImpl implements ReservationService {
     private final BookableResourceRepository resourceRepository;
     private final CustomerService customerService;
     private final BusinessOperatingHoursRepository businessOperatingHoursRepository;
-
+    private final GoogleCalendarService googleCalendarService;
 
 
     @Override
@@ -133,6 +136,10 @@ public class ReservationServiceImpl implements ReservationService {
 
         reservation =
                 reservationRepository.save(reservation);
+
+        if (reservation.getStatus() == ReservationStatus.CONFIRMED) {
+            googleCalendarService.createEvent(reservation);
+        }
 
         return reservationMapper.toResponse(reservation);
     }
@@ -241,6 +248,10 @@ public class ReservationServiceImpl implements ReservationService {
         reservation =
                 reservationRepository.save(reservation);
 
+        if (reservation.getStatus() == ReservationStatus.CONFIRMED) {
+            googleCalendarService.updateEvent(reservation);
+        }
+
         return reservationMapper.toResponse(reservation);
     }
 
@@ -326,12 +337,68 @@ public class ReservationServiceImpl implements ReservationService {
                                 )
                         );
 
-        reservation.setStatus(request.getStatus());
+        ReservationStatus previousStatus =
+                reservation.getStatus();
+
+        ReservationStatus newStatus =
+                request.getStatus();
+
+        reservation.setStatus(newStatus);
 
         reservation =
                 reservationRepository.save(reservation);
 
-        return reservationMapper.toResponse(reservation);
+        /*
+         * Masuk ke CONFIRMED
+         */
+        if (previousStatus != ReservationStatus.CONFIRMED
+                && newStatus == ReservationStatus.CONFIRMED) {
+
+            log.info(
+                    "Creating Google Calendar event for reservation {}",
+                    reservation.getId()
+            );
+
+            googleCalendarService.createEvent(
+                    reservation
+            );
+        }
+
+        /*
+         * Keluar dari CONFIRMED
+         */
+        else if (previousStatus == ReservationStatus.CONFIRMED
+                && newStatus != ReservationStatus.CONFIRMED) {
+
+            log.info(
+                    "Deleting Google Calendar event for reservation {}",
+                    reservation.getId()
+            );
+
+            googleCalendarService.deleteEvent(
+                    reservation
+            );
+        }
+
+        /*
+         * CONFIRMED → CONFIRMED
+         */
+        else if (previousStatus == ReservationStatus.CONFIRMED
+                && newStatus == ReservationStatus.CONFIRMED) {
+
+            log.info(
+                    "Updating Google Calendar event for reservation {}",
+                    reservation.getId()
+            );
+
+            googleCalendarService.updateEvent(
+                    reservation
+            );
+        }
+
+        return reservationMapper.toResponse(
+                reservation
+        );
     }
 
     @Override
@@ -356,6 +423,12 @@ public class ReservationServiceImpl implements ReservationService {
                                         id
                                 )
                         );
+
+        try {
+            googleCalendarService.deleteEvent(reservation);
+        } catch (Exception e) {
+            // Continue deleting reservation.
+        }
 
         reservationRepository.delete(reservation);
     }

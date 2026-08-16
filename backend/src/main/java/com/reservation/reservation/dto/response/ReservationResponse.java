@@ -37,6 +37,8 @@ public class ReservationResponse {
 
     private String note;
 
+    private String googleCalendarEventId;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

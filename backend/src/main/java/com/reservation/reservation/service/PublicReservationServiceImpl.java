@@ -5,6 +5,7 @@ import com.reservation.business.repository.BusinessRepository;
 import com.reservation.customer.entity.Customer;
 import com.reservation.customer.service.CustomerService;
 import com.reservation.common.exception.ResourceNotFoundException;
+import com.reservation.integration.google.service.GoogleCalendarService;
 import com.reservation.reservation.dto.request.CreatePublicReservationRequest;
 import com.reservation.reservation.dto.response.ReservationResponse;
 import com.reservation.reservation.entity.Reservation;
@@ -169,15 +170,9 @@ public class PublicReservationServiceImpl
                         )
         );
 
-        /*
-         * 9. Simpan.
-         */
         reservation =
                 reservationRepository.save(reservation);
 
-        /*
-         * 10. Response.
-         */
         return reservationMapper.toResponse(
                 reservation
         );

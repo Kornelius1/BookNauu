@@ -44,6 +44,9 @@ public class Reservation extends BaseEntity {
     @Column(length = 500)
     private String note;
 
+    @Column(name = "google_calendar_event_id")
+    private String googleCalendarEventId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ReservationStatus status;

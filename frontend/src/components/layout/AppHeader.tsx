@@ -1,5 +1,5 @@
 import { Bell, LogOut, Settings, ChevronDown, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -83,9 +83,12 @@ export function AppHeader() {
                             Profile
                         </DropdownMenuItem>
 
-                        <DropdownMenuItem disabled>
-                            <Settings className="mr-2 h-4 w-4" />
-                            Settings
+                        <DropdownMenuItem
+                            onClick={() => navigate("/settings")}
+                            className="flex items-center"
+                        >
+                            <Settings className="mr-2 h-4 w-4 shrink-0" />
+                            <span>Settings</span>
                         </DropdownMenuItem>
 
                         <DropdownMenuSeparator />

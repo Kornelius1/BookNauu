@@ -5,8 +5,9 @@ import {
     Plus,
     Users,
     UserMinus,
-    Loader2,
 } from "lucide-react";
+
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
     getTeamMembers,
@@ -48,9 +49,48 @@ import { Label } from "@/components/ui/label";
 
 import { Badge } from "@/components/ui/badge";
 
+function MembershipSkeleton() {
+    return (
+        <div className="space-y-4">
+            {/* Table header */}
+            <div className="flex items-center gap-4 border-b pb-3">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-20" />
+            </div>
+
+            {/* Rows */}
+            {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                    key={index}
+                    className="flex items-center gap-4 border-b py-4 last:border-0"
+                >
+                    <div className="w-1/3">
+                        <Skeleton className="h-4 w-32" />
+                    </div>
+
+                    <div className="w-1/3">
+                        <Skeleton className="h-4 w-40" />
+                    </div>
+
+                    <div className="w-1/4">
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                    </div>
+
+                    <div className="ml-auto">
+                        <Skeleton className="h-8 w-8 rounded-md" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+
+
 export default function MembershipPage() {
 
-    const { business } = useAuth();
+    const { business, isLoading: authLoading } = useAuth();
     const isOwner = business?.role === "OWNER";
     const [members, setMembers] = useState<TeamMember[]>([]);
     const [loading, setLoading] = useState(true);
@@ -153,7 +193,9 @@ export default function MembershipPage() {
                         Manage your business team members.
                     </p>
                 </div>
-                {isOwner && (
+                {authLoading ? (
+                    <Skeleton className="h-9 w-32 rounded-md" />
+                ) : isOwner ? (
                 <Dialog
                     open={inviteOpen}
                     onOpenChange={(open) => {
@@ -222,7 +264,7 @@ export default function MembershipPage() {
                                 disabled={inviteLoading}
                             >
                                 {inviteLoading && (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <MembershipSkeleton />
                                 )}
 
                                 Send Invitation
@@ -230,7 +272,7 @@ export default function MembershipPage() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-                )}
+                ) : null}
             </div>
 
             <Card>
@@ -247,7 +289,9 @@ export default function MembershipPage() {
                             </CardDescription>
                         </div>
 
-                        {!loading && (
+                        {loading ? (
+                            <Skeleton className="h-6 w-20 rounded-full" />
+                        ) : (
                             <Badge variant="secondary">
                                 {members.length}{" "}
                                 {members.length === 1
@@ -261,7 +305,7 @@ export default function MembershipPage() {
                 <CardContent>
                     {loading ? (
                         <div className="flex items-center justify-center py-12">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            <MembershipSkeleton  />
                         </div>
                     ) : error ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -415,7 +459,7 @@ export default function MembershipPage() {
                             disabled={removeLoading}
                         >
                             {removeLoading && (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <MembershipSkeleton />
                             )}
 
                             Remove
