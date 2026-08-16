@@ -97,6 +97,11 @@ public class ReservationMapper {
                         reservation.getNote()
                 )
 
+                .googleCalendarEventId(
+                        reservation.getGoogleCalendarEventId()
+                )
+
+
                 .createdAt(
                         reservation.getCreatedAt()
                 )

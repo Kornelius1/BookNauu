@@ -3,6 +3,7 @@
 **/.env
 **/.env.*
 
+backend/src/main/resources/application-local.yml
 backend/HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
